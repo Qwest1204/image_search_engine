@@ -1,0 +1,16 @@
+version: 'alpha-0.1'
+
+services:
+  database:
+    image: postgres:16
+    container_name: postgres
+    ports:
+       - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+    volumes:
+      - ./container-data/database/data:/var/lib/postgresql/data
+      ###- ./container-data/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
