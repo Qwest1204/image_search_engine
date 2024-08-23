@@ -29,6 +29,9 @@ connection = psy.connect(**DB_CONNECT_KWARGS)
 connection.set_session(autocommit=True)
 cursor = connection.cursor()
 
+def load_image_into_numpy_array(data):
+    return np.array(Image.open(BytesIO(data)))
+
 
 def base64_to_narray_list(base64_str) -> list:
     narray_img = []
@@ -136,8 +139,10 @@ def get_data_text(text, n_results):
 
 
 def get_data_images(image, n_results):
+    list_temp=[]
+    list_temp.append(load_image_into_numpy_array(image.file.read()))
     query = multimodal_db.query(
-        query_images=image,
+        query_images=list_temp,
         n_results=n_results,
         include=['documents', 'distances', 'metadatas', 'data', 'uris'],
     )
