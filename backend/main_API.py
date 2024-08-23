@@ -36,7 +36,7 @@ async def get_data_from_system_by_text(query: Annotated[Querry_by_text, Depends(
 @app.post("/get_data_from_system_by_image")
 async def get_data_from_system_by_image(query: Annotated[Query_by_image, Depends()]):
     result = get_data_images(query.image, query.n_num)
-    return JSONResponse({"result": result['ids']})
+    return JSONResponse({"response": {"ids": result['ids'], "numpy_array": json.dumps(result['image_array'])}})
 
 
 @app.get("/get_row")
