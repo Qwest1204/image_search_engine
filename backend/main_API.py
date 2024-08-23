@@ -1,18 +1,18 @@
 from typing import Annotated
-
+import json
 from fastapi import FastAPI, File, UploadFile, Depends
 from fastapi.responses import JSONResponse
-from main_BACK import add_data_base64, get_data_text, get_data_images
+from main_BACK import add_data_base64, get_data_text, get_data_images, get_total_row
 from pydantic import BaseModel
 import base64
 
 app = FastAPI()
 
 
-
 class Querry_by_text(BaseModel):
     query: str
     n_num: int
+
 
 class Query_by_image(BaseModel):
     image: UploadFile = File(...)
@@ -30,10 +30,15 @@ async def upload_image(image: UploadFile = File(...)):
 @app.get("/get_data_from_system_by_text")
 async def get_data_from_system_by_text(query: Annotated[Querry_by_text, Depends()]):
     result = get_data_text(query.query, query.n_num)
-    return JSONResponse({"message": result['ids']})
+    return JSONResponse({"response": {"ids": result['ids'], "numpy_array": json.dumps(result['image_array'])}})
 
 
 @app.post("/get_data_from_system_by_image")
 async def get_data_from_system_by_image(query: Annotated[Query_by_image, Depends()]):
     result = get_data_images(query.image, query.n_num)
     return JSONResponse({"result": result['ids']})
+
+
+@app.get("/get_row")
+async def get_total_items():
+     return JSONResponse({"total_row": get_total_row()})
