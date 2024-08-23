@@ -15,7 +15,7 @@ from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 from chromadb.utils.data_loaders import ImageLoader
 
 ##---------chromadb------------------------------
-client = chromadb.PersistentClient(path="data/", settings=Settings(allow_reset=True))
+client = chromadb.PersistentClient(path="/backend/data/", settings=Settings(allow_reset=True))
 imageloader = ImageLoader()
 multimodal_ef = OpenCLIPEmbeddingFunction()
 
