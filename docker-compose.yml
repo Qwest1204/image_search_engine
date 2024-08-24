@@ -12,5 +12,19 @@ services:
     volumes:
       - ./container-data/database/data:/var/lib/postgresql/data
       ###- ./container-data/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+  api:
+    container_name: api
+    build: ./backend
+    command:
+      [
+        "poetry",
+        "run",
+        "uvicorn",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "main_API.py"
+      ]
 
 
