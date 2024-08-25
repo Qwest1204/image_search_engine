@@ -1,7 +1,18 @@
-version: 'alpha-0.1'
+version: 'beta-0.3.98'
 
 services:
-  database:
+  chroma:
+    image: chromadb/chroma:latest
+    volumes:
+      - ./container-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma # this is the default path, change it as needed
+      - ANONYMIZED_TELEMETRY=${ANONYMIZED_TELEMETRY:-TRUE}
+    ports:
+      - 8000:8000
+
+  postgres:
     image: postgres:16
     container_name: postgres
     ports:
@@ -12,18 +23,20 @@ services:
     volumes:
       - ./container-data/database/data:/var/lib/postgresql/data
       ###- ./container-data/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
   api:
     container_name: api
     build: ./backend
     expose:
-      - 8000
+      - 8001
     ports:
-      - 8000:8000
+      - 8001:8001
     environment:
-      DATABASE_HOST: database
+      DATABASE_HOST: postgres
+      CHROMA_HOST: chroma
       DEBUG: True
     command:
-      # uvicorn main:app --host 0.0.0.0 --port 8000
+
       [
         "poetry",
         "run",
@@ -32,7 +45,10 @@ services:
         "--host",
         "0.0.0.0",
         "--port",
-        "8000"
+        "8001"
       ]
+    depends_on:
+      - chroma
+      - postgres
 
 

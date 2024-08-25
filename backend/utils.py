@@ -17,7 +17,7 @@ from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 from chromadb.utils.data_loaders import ImageLoader
 
 ##---------chromadb------------------------------
-client = chromadb.HttpClient(host=os.environ.get("CHROMA_HOST"), port=8001)
+client = chromadb.HttpClient(host=os.environ.get("CHROMA_HOST"), port=8000)
 imageloader = ImageLoader()
 multimodal_ef = OpenCLIPEmbeddingFunction()
 
