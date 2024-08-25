@@ -1,20 +1,18 @@
-import os
-import hashlib
 import base64
-
-import numpy as np
-from numpy import asarray
-from io import BytesIO
-from PIL import Image
+import hashlib
+import os
 import pickle
-
-from CONFIG import DB_CONNECT_KWARGS
-import psycopg2 as psy
+from io import BytesIO
 
 import chromadb
-from chromadb import Settings
-from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
+import numpy as np
+import psycopg2 as psy
+from PIL import Image
 from chromadb.utils.data_loaders import ImageLoader
+from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
+from numpy import asarray
+
+from CONFIG import DB_CONNECT_KWARGS
 
 ##---------chromadb------------------------------
 client = chromadb.HttpClient(host=os.environ.get("CHROMA_HOST"), port=8000)
@@ -99,16 +97,6 @@ def get_hash_of_base64(base64_str) -> list:
         array_hash.append(hashlib.sha256(base64_str[k].encode('utf-8')).hexdigest()[:10])
     return array_hash
 
-
-# def get_uid(data) -> list:
-#
-#     hash_img = []
-#     for i in range(len(data)):
-#         with open(data[i], "rb") as f:
-#             hash_img.append(hashlib.sha256(f.read()).hexdigest()[:10])
-#     return hash_img
-
-
 def get_blobs(path):
     """Reads image data from a file as binary.
 
@@ -170,16 +158,6 @@ def add_data_base64(base64_string) -> int:
     )
     add_data_to_postgres(base64_string, ids, d_type='base64')
     return multimodal_db.count()
-
-
-# def add_data_image(paths) -> int:
-#     ids = get_uid(paths)
-#     multimodal_db.add(
-#         ids=ids,
-#         uris=paths,
-#     )
-#     add_data_to_postgres(paths, ids, d_type='image')
-#     return multimodal_db.count()
 
 
 def get_data_text(text, n_results):
