@@ -2,7 +2,7 @@ from typing import Annotated
 import json
 from fastapi import FastAPI, File, UploadFile, Depends
 from fastapi.responses import JSONResponse
-from main_BACK import add_data_base64, get_data_text, get_data_images, get_total_row
+from utils import add_data_base64, get_data_text, get_data_images, get_total_row
 from pydantic import BaseModel
 import base64
 

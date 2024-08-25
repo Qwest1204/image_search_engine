@@ -15,16 +15,24 @@ services:
   api:
     container_name: api
     build: ./backend
+    expose:
+      - 8000
+    ports:
+      - 8000:8000
+    environment:
+      DATABASE_HOST: database
+      DEBUG: True
     command:
+      # uvicorn main:app --host 0.0.0.0 --port 8000
       [
         "poetry",
         "run",
         "uvicorn",
+        "main_API:app",
         "--host",
         "0.0.0.0",
         "--port",
-        "8000",
-        "main_API.py"
+        "8000"
       ]
 
 

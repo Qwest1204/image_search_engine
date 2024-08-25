@@ -1,3 +1,5 @@
+import os
+
 import hashlib
 import cv2
 import base64
@@ -25,12 +27,16 @@ multimodal_db = client.get_or_create_collection(name="multimodal",
                                                 )
 
 ##----------postgresql----------------------------
+DB_CONNECT_KWARGS['host'] = os.environ.get("DATABASE_HOST")
 connection = psy.connect(**DB_CONNECT_KWARGS)
 connection.set_session(autocommit=True)
 cursor = connection.cursor()
 
 
 def load_image_into_numpy_array(data):
+    """
+
+    """
     return np.array(Image.open(BytesIO(data)))
 
 
