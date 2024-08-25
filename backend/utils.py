@@ -164,10 +164,11 @@ def get_data_text(text, n_results):
     query = multimodal_db.query(
         query_texts=text,
         n_results=n_results,
-        include=['documents', 'distances', 'metadatas', 'data', 'uris'],
+        include=['distances'],
     )
     query_dict = {
         'ids': query['ids'],
+        'distances': query['distances'],
         'image_array': get_image_array_from_postgres(query['ids']),
     }
     return query_dict
@@ -179,10 +180,11 @@ def get_data_images(image, n_results):
     query = multimodal_db.query(
         query_images=list_temp,
         n_results=n_results,
-        include=['documents', 'distances', 'metadatas', 'data', 'uris'],
+        include=['distances'],
     )
     query_dict = {
         'ids': query['ids'],
+        'distances': query['distances'],
         'image_array': get_image_array_from_postgres(query['ids']),
     }
     return query_dict

@@ -9,12 +9,12 @@ import base64
 app = FastAPI()
 
 
-class Querry_by_text(BaseModel):
+class QueryByText(BaseModel):
     query: str
     n_num: int
 
 
-class Query_by_image(BaseModel):
+class QueryByImage(BaseModel):
     image: UploadFile = File(...)
     n_num: int
 
@@ -28,17 +28,23 @@ async def upload_image(image: UploadFile = File(...)):
 
 
 @app.get("/get_data_from_system_by_text")
-async def get_data_from_system_by_text(query: Annotated[Querry_by_text, Depends()]):
+async def get_data_from_system_by_text(query: Annotated[QueryByText, Depends()]):
     result = get_data_text(query.query, query.n_num)
-    return JSONResponse({"response": {"ids": result['ids'], "numpy_array": json.dumps(result['image_array'])}})
+    return JSONResponse({"response": {"ids": result['ids'],
+                                      'L2_distances': result['distances'],
+                                      "numpy_array": json.dumps(result['image_array'])
+                                      }})
 
 
 @app.post("/get_data_from_system_by_image")
-async def get_data_from_system_by_image(query: Annotated[Query_by_image, Depends()]):
+async def get_data_from_system_by_image(query: Annotated[QueryByImage, Depends()]):
     result = get_data_images(query.image, query.n_num)
-    return JSONResponse({"response": {"ids": result['ids'], "numpy_array": json.dumps(result['image_array'])}})
+    return JSONResponse({"response": {"ids": result['ids'],
+                                      'L2_distances': result['distances'],
+                                      "numpy_array": json.dumps(result['image_array'])
+                                      }})
 
 
 @app.get("/get_row")
 async def get_total_items():
-     return JSONResponse({"total_row": get_total_row()})
+    return JSONResponse({"total_row": get_total_row()})
