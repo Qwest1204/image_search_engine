@@ -1,5 +1,5 @@
-import base64
 import hashlib
+import cv2
 import os
 import pickle
 from io import BytesIO
@@ -10,7 +10,7 @@ import psycopg2 as psy
 from PIL import Image
 from chromadb.utils.data_loaders import ImageLoader
 from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
-from numpy import asarray
+
 
 from CONFIG import DB_CONNECT_KWARGS
 
@@ -46,7 +46,7 @@ def connect_to_postgres(DB_CONNECT_KWARGS):
 
 
 def load_image_into_numpy_array(data):
-    """Loads an image from bytes data into a NumPy array.
+    """ Loads an image from bytes data into a NumPy array.
 
     Args:
         data: Bytes data representing the image.
@@ -58,60 +58,27 @@ def load_image_into_numpy_array(data):
     return np.array(Image.open(BytesIO(data)))
 
 
-def base64_to_narray(base64_str) -> list:
-    """Converts a list of base64 encoded images to NumPy arrays.
+def get_hash(data):
+    """ Function for getting hash from binary data.
 
     Args:
-       base64_str: A list of base64 encoded strings.
+        data: bytes data representing the image.
 
-    Returns:
-        narray_img: A list of NumPy arrays representing the images.
+    Return:
+        sha256 hash of data.
     """
-
-    narray_img = []
-    for j in range(len(base64_str)):
-        image_bytes = base64.b64decode(base64_str[j])
-        image = Image.open(BytesIO(image_bytes))
-        narray_img.append(np.array(image))
-    return narray_img
-
-
-# def base64_to_narray_ones(base64_str):
-#     image_bytes = base64.b64decode(base64_str)
-#     image = Image.open(BytesIO(image_bytes))
-#     return np.array(image)
-
-
-def get_hash_of_base64(base64_str) -> list:
-    """Generates a SHA256 hash for each base64 encoded string.
-
-    Args:
-        base64_str: A list of base64 encoded strings.
-
-    Returns:
-        A list of SHA256 hashes (truncated to 10 characters).
-    """
-
-    array_hash = []
-    for k in range(len(base64_str)):
-        array_hash.append(hashlib.sha256(base64_str[k].encode('utf-8')).hexdigest()[:10])
-    return array_hash
-
-def get_blobs(path):
-    """Reads image data from a file as binary.
-
-    Args:
-        path: The path to the image file.
-
-    Returns:
-        Binary data representing the image.
-    """
-
-    drawing = open(path, 'rb').read()
-    return psy.Binary(drawing)
+    return hashlib.sha256(data).hexdigest()[:10]
 
 
 def get_image_array_from_postgres(uid) -> list:
+    """ Function for getting numpy array from database by unique id
+
+    Args:
+        uid: unique id of the image.
+
+    Returns:
+        list of numpy arrays representing the images.
+    """
     some_array = []
     cursor = connect_to_postgres(DB_CONNECT_KWARGS).cursor()
     for ids in range(len(uid)):
@@ -127,40 +94,35 @@ def get_image_array_from_postgres(uid) -> list:
     return some_array
 
 
-def add_data_to_postgres(data, ids, d_type):
+def add_data_to_postgres(data, ids):
+    """ Function for getting numpy array from database by unique id
+
+    Args:
+        data: unique id of the image.
+        ids: list of unique ids of the images.
+
+    """
     cursor = connect_to_postgres(DB_CONNECT_KWARGS).cursor()
-    if d_type == 'base64':
-        for i in range(len(data)):
-            cursor.execute(
-                """
-                INSERT INTO chroma_images(uniq_id, np_array_bytes, image_bytes)
-                VALUES (%s, %s, %s)
-                """,
-                (ids[i], pickle.dumps(base64_to_narray([data[i]])[0]), psy.Binary(base64.b64decode(data[i])))
-            )
-    if d_type == 'image':
-        for i in range(len(data)):
-            cursor.execute(
-                """
-                INSERT INTO chroma_images(uniq_id, np_array_bytes, image_bytes)
-                VALUES (%s, %s, %s)
-                """,
-                (ids[i], pickle.dumps(asarray(Image.open(data[i]))), get_blobs(data[i]))
-            )
+    for i in range(len(data)):
+        cursor.execute(
+            """
+            INSERT INTO chroma_images(uniq_id, np_array_bytes, image_bytes)
+            VALUES (%s, %s, %s)
+            """,
+            (ids[i], pickle.dumps(cv2.imdecode(np.frombuffer(data[i], np.uint8), -1)), data[i])
+        )
 
 
-def add_data_base64(base64_string) -> int:
-    ids = get_hash_of_base64(base64_string)
-    image_data = base64_to_narray(base64_string)
-    multimodal_db.add(
-        ids=ids,
-        images=image_data,
-    )
-    add_data_to_postgres(base64_string, ids, d_type='base64')
-    return multimodal_db.count()
+def get_data_text(text, n_results) -> dict:
+    """ Function for getting data from database by test query
 
+    Args:
+        text: text query to get data from system.
+        n_results: number of results to return.
 
-def get_data_text(text, n_results):
+    Return:
+        query_dict: Dictionary of query dictionaries.
+    """
     query = multimodal_db.query(
         query_texts=text,
         n_results=n_results,
@@ -174,9 +136,17 @@ def get_data_text(text, n_results):
     return query_dict
 
 
-def get_data_images(image, n_results):
-    list_temp = []
-    list_temp.append(load_image_into_numpy_array(image.file.read()))
+def get_data_images(image, n_results) -> dict:
+    """ Function for getting data from database by numpy array
+
+    Args:
+        image: numpy array representing the image.
+        n_results: number of results to return.
+
+    Return:
+        query_dict: Dictionary of query dictionaries.
+    """
+    list_temp = [load_image_into_numpy_array(image.file.read())]
     query = multimodal_db.query(
         query_images=list_temp,
         n_results=n_results,
@@ -197,4 +167,23 @@ def get_total_row():
         total number of rows in the database
 
     """
+    return multimodal_db.count()
+
+
+def add_data_to_system(data) -> int:
+    """ Function for adding data to system
+
+    Args:
+        data: numpy array representing the image.
+
+    Returns:
+        integer number count of row in the database.
+    """
+    ids = [get_hash(data)]
+    image_data = [cv2.imdecode(np.frombuffer(data, np.uint8), -1)]
+    multimodal_db.add(
+        ids=ids,
+        images=image_data,
+    )
+    add_data_to_postgres([data], ids)
     return multimodal_db.count()

@@ -2,7 +2,7 @@ from typing import Annotated
 import json
 from fastapi import FastAPI, File, UploadFile, Depends
 from fastapi.responses import JSONResponse
-from utils import add_data_base64, get_data_text, get_data_images, get_total_row
+from utils import get_data_text, get_data_images, get_total_row, add_data_to_system
 from pydantic import BaseModel
 import base64
 
@@ -22,9 +22,8 @@ class QueryByImage(BaseModel):
 @app.post("/add_data_to_system")
 async def upload_image(image: UploadFile = File(...)):
     image_data = await image.read()
-    image_base64 = [base64.b64encode(image_data).decode('utf-8')]
-    add_data_base64(image_base64)
-    return JSONResponse({"message": "Image received successfully"})
+    add_data_to_system(image_data)
+    return JSONResponse({"message": "OK"})
 
 
 @app.get("/get_data_from_system_by_text")
